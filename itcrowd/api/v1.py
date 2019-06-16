@@ -4,12 +4,35 @@ from itcrowd.models import Person, Movies
 from itcrowd import *
 # from flask import jsonify
 from bson.json_util import dumps
+from flask_httpauth import HTTPBasicAuth
 
 
 not_exist = {'message': 'does not exist'}
 ok = {'message': 'Operation ok'}
 
 parser = reqparse.RequestParser()
+
+auth = HTTPBasicAuth()
+
+list_of_roman = [('I', 1), ('IV', 4), ('V', 5), ('IX', 9), ('X', 10),
+                 ('XL', 40), ('L', 50), ('XC', 90), ('C' , 100),
+                 ('CD', 400), ('D', 500), ('CM',900), ('M', 1000)]
+
+list_of_roman = list(reversed(list_of_roman))
+
+def to_roman(number: int, roman: str = '') -> str:
+    for r, i in list_of_roman:
+        if number >= i:
+            return to_roman(number - i, roman + '%s' % (r))
+    return roman
+
+
+@auth.verify_password
+def varify_password(username, password):
+    if db.authentication.find_one({'user': username, 'password': password}):
+        print("hola")
+        return True
+    return False
 
 
 class SayHello(Resource):
@@ -50,6 +73,7 @@ class GetPersonByLastName(Resource):
 
 
 class SetPerson(Resource):
+    decorators = [auth.login_required]
     def post(self):
         args = request.get_json(force=True)
         person = Person(args['first_name'], args['last_name'], args['alias'])
@@ -60,6 +84,7 @@ class SetPerson(Resource):
 
 
 class SetMovies(Resource):
+    decorators = [auth.login_required]
     def post(self):
         args = request.get_json(force=True)
         movies = Movies(args['title'], args['year']) 
@@ -71,18 +96,26 @@ class SetMovies(Resource):
 
 class MoviesList(Resource):
     def get(self):
-        return dumps(db.movies.find({}))
+        m = list(db.movies.find({}))
+
+        for d in m:
+            d.update(("year", to_roman(value)) for k, value in d.items() if k == "year")
+        return dumps(m)
 
 
 class GetMoviesByTitle(Resource):
     def get(self, title: str):
-        m = db.movies.find({'title': title})
+        m = list(db.movies.find({'title': title}))
         if m:
+            for d in dumps(m):
+                d.update(("year", to_roman(value)) for k, value in d.items() if k == "year")
             return dumps(m)
         else:
             return not_exist, 400
 
+
 class AddPersonToMovieAs(Resource):
+    decorators = [auth.login_required]
     def put(self):
         args = request.get_json(force=True)
         person = db.person.find({'aliases': args['alias']})
