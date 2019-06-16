@@ -51,13 +51,12 @@ class GetPersonByLastName(Resource):
 
 class SetPerson(Resource):
     def post(self):
-        args = parser.parse_args()
-
+        args = request.get_json(force=True)
         person = Person(args['first_name'], args['last_name'], args['alias'])
         if not person.save():
             return ok, 201
         else:
-            return 400
+            return {"message": "This Person is already on database"}, 400
 
 
 class SetMovies(Resource):
@@ -70,6 +69,11 @@ class SetMovies(Resource):
             return {"message": "movies is already on database"}, 400
 
 
+class MoviesList(Resource):
+    def get(self):
+        return dumps(db.movies.find({}))
+
+
 class GetMoviesByTitle(Resource):
     def get(self, title: str):
         m = db.movies.find({'title': title})
@@ -80,25 +84,30 @@ class GetMoviesByTitle(Resource):
 
 class AddPersonToMovieAs(Resource):
     def put(self):
-        director, productor, actor = False
-        args = parser.parse_args()
-        person = db.person.find({'alias': args['alias']})
+        args = request.get_json(force=True)
+        person = db.person.find({'aliases': args['alias']})
         movies = db.movies.find({'title': args['title']})
-        p, m = None
+        if not person.count() or not movies.count():
+            return {"message": "Person or Movie does not exist"}, 400
+        person = person[0]
+        movies = movies[0]
+
+        p = None
+        m = None
         if args['like'] == 'director':
-            p = Person(person['last_name'], person['first_name'], person['alias'],
+            p = Person(person['first_name'], person['last_name'], person['aliases'],
                        movies_as_director=[movies['_id']])
             p.save_movies()
             m = Movies(movies['title'], movies['year'], directors=[person['_id']])
             m.save_people()
         elif args['like'] == 'productor':
-            p = Person(person['last_name'], person['first_name'], person['alias'],
+            p = Person(person['first_name'], person['last_name'], person['aliases'],
                        movies_as_productor=[movies['_id']])
             p.save_movies()
             m = Movies(movies['title'], movies['year'], productors=[person['_id']])
             m.save_people()
         elif args['like'] == 'actor':
-            p = Person(person['last_name'], person['first_name'], person['alias'],
+            p = Person(person['first_name'], person['last_name'], person['aliases'],
                        movies_as_actor=[movies['_id']])
             p.save_movies()
             m = Movies(movies['title'], movies['year'], casting=[person['_id']])

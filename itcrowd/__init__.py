@@ -13,17 +13,6 @@ app.config['MONGO_URI'] = "mongodb://localhost:27017/itcrowddb"
 db = PyMongo(app).db
 app.config['SECRET_KEY'] = 'dev'
 
-"""
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        if isinstance(o, datetime.datetime): 
-            return str(o)
-        return json.JSONEncoder.default(self, o)
-
-app.json_encoder = JSONEncoder
-"""
 from itcrowd import routes
 from itcrowd import models
 
@@ -37,7 +26,8 @@ from itcrowd.api.v1 import (
         SetPerson,
         SetMovies,
         GetMoviesByTitle,
-        AddPersonToMovieAs
+        AddPersonToMovieAs,
+        MoviesList
     )
 
 api = Api(app)
@@ -51,3 +41,4 @@ api.add_resource(SetPerson, '/Person')
 api.add_resource(SetMovies, '/Movies')
 api.add_resource(GetMoviesByTitle, '/Movies/<string:title>')
 api.add_resource(AddPersonToMovieAs, '/AddPersonToMovieAs')
+api.add_resource(MoviesList, '/MoviesList')

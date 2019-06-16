@@ -2,7 +2,7 @@ from itcrowd import  *
 
 
 class Person:
-    def __init__(self, last_name: str, first_name: str,
+    def __init__(self, first_name: str, last_name: str,
                  aliases: str, movies_as_actor: list = [],
                  movies_as_director: list = [],
                  movies_as_productor: list = []) -> None:
@@ -30,22 +30,22 @@ class Person:
                 'first_name': self.first_name,
                 'aliases': self.aliases,
                 'movies_as_actor': self.movies_as_actor, 
-                'movies_as_director': self.movie_as_director,
-                'movies_as_productor': self.movie_as_productor
+                'movies_as_director': self.movies_as_director,
+                'movies_as_productor': self.movies_as_productor
             }
 
     def save_movies(self) -> int:
         person = db.person.find({
-                'last_name': self.last_name,
-                'first_name': self.first_name,
-                'aliases': self.aliases
+                "last_name": self.last_name,
+                "first_name": self.first_name,
+                "aliases": self.aliases
             })
+        person = person[0]
         
         if person:
-            self.movies_as_actor = person.movies_as_actor.append(self.movies_as_actor)
-            self.movies_as_director = person.movies_as_director.append(self.movies_as_director)
-            self.movies_as_productor = person.movies_as_productor.append(self.movies_as_productor)
-            
+            self.movies_as_actor += person['movies_as_actor']
+            self.movies_as_director += person['movies_as_director']
+            self.movies_as_productor += person['movies_as_productor']
             self._update()
             return 0
         else:
@@ -56,7 +56,10 @@ class Person:
                 'last_name': self.last_name,
                 'first_name': self.first_name,
                 'aliases': self.aliases
-                }, {'movies_as_actor': self.movies_as_actor,
+                }, {'last_name': self.last_name,
+                    'first_name': self.first_name,
+                    'aliases': self.aliases,
+                    'movies_as_actor': self.movies_as_actor,
                     'movies_as_director': self.movies_as_director,
                     'movies_as_productor': self.movies_as_productor})
 
@@ -96,11 +99,12 @@ class Movies:
                 'title': self.title,
                 'year': self.year,
             })
+        movies = movies[0]
         
         if movies:
-            self.casting = movies.casting.append(self.casting)
-            self.directors = movies.directors.append(self.directors)
-            self.productors = movies.productors.append(self.productors)
+            self.casting += movies['casting']
+            self.directors += movies['directors']
+            self.productors += movies['productors']
             self._update()
             return 0
         else:
@@ -110,6 +114,8 @@ class Movies:
         db.person.update({
                 'title': self.title,
                 'year': self.year,
-                }, {'casting': self.casting,
+                }, {'title': self.title,
+                    'year': self.year,
+                    'casting': self.casting,
                     'directors': self.directors,
                     'productors': self.productors})
