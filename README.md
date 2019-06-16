@@ -14,6 +14,8 @@ IT crowd  test
   * ```/AddPersonToMovieAs```: ```{"alias": "Keanu", "like": "actor", "title": "The Matrix"}```
 
 ## API Rules
+
+```
 api.add_resource(SayHello, '/SayHello')
 api.add_resource(GetAllPeople, '/GetAllPeople')
 api.add_resource(GetPersonByAlias, '/GetPersonByAlias/<string:alias>')
@@ -24,7 +26,8 @@ api.add_resource(SetMovies, '/Movies')
 api.add_resource(GetMoviesByTitle, '/Movies/<string:title>')
 api.add_resource(AddPersonToMovieAs, '/AddPersonToMovieAs')
 api.add_resource(MoviesList, '/MoviesList')
-  
+```
+
 ## Authentication
 
 Create a collection named ```authentication``` and add {"user": [username],"password": [password]}
